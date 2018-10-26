@@ -6,30 +6,30 @@
 
 export MYSQL, MYSQL_RES, MYSQL_ROW, MYSQL_FIELD_OFFSET, MYSQL_ROW_OFFSET
 
-type MYSQL
-    ptr::Ptr{Void}
+mutable struct MYSQL
+    ptr::Ptr{Cvoid}
     MYSQL(p) = (val = new(p) ; finalizer(val, finalizer!) ; val)
 end
 
-type MYSQL_RES
-    ptr::Ptr{Void}
+mutable struct MYSQL_RES
+    ptr::Ptr{Cvoid}
     MYSQL_RES(p) = (val = new(p) ; finalizer(val, finalizer!) ; val)
 end
 
-immutable MYSQL_ROW
-    data::Vector{UTF8String}
+struct MYSQL_ROW
+    data::Vector{String}
 end
 
-immutable MYSQL_FIELD_OFFSET
+struct structMYSQL_FIELD_OFFSET
     off::UInt32
 end
 
-type MYSQL_ROW_OFFSET
-    ptr::Ptr{Void}
+mutable struct MYSQL_ROW_OFFSET
+    ptr::Ptr{Cvoid}
     MYSQL_ROW_OFFSET(p) = (val = new(p) ; finalizer(val, finalizer!) ; val)
 end
 
-immutable MYSQL_FIELD_TYPE
+struct structMYSQL_FIELD_TYPE
     typ::UInt8
 end
 
@@ -79,7 +79,7 @@ export MYSQL_TIMESTAMP_TYPE
 export MYSQL_TIMESTAMP_NONE, MYSQL_TIMESTAMP_ERROR, MYSQL_TIMESTAMP_DATE,
        MYSQL_TIMESTAMP_DATETIME, MYSQL_TIMESTAMP_TIME
 
-immutable MYSQL_TIMESTAMP_TYPE
+immutable structMYSQL_TIMESTAMP_TYPE
     typ::Int8
 end
 
@@ -101,7 +101,7 @@ export MYSQL_OPT_CONNECT_TIMEOUT, MYSQL_OPT_COMPRESS, MYSQL_OPT_NAMED_PIPE, MYSQ
        MYSQL_PLUGIN_DIR, MYSQL_DEFAULT_AUTH, MYSQL_ENABLE_CLEARTEXT_PLUGIN, MYSQL_PROGRESS_CALLBACK,
        MYSQL_OPT_NONBLOCK
 
-immutable MYSQL_OPTION
+immutable structMYSQL_OPTION
     opt::UInt16
 end
 
@@ -137,7 +137,7 @@ export MYSQL_PROTOCOL_TYPE
 export MYSQL_PROTOCOL_DEFAULT, MYSQL_PROTOCOL_TCP, MYSQL_PROTOCOL_SOCKET, MYSQL_PROTOCOL_PIPE,
        MYSQL_PROTOCOL_PIPE
 
-immutable MYSQL_PROTOCOL_TYPE
+immutable structMYSQL_PROTOCOL_TYPE
     typ::UInt8
 end
 
@@ -152,7 +152,7 @@ export MYSQL_STATUS
 export MYSQL_STATUS_READY, MYSQL_STATUS_GET_RESULT, MYSQL_STATUS_USE_RESULT,
        MYSQL_STATUS_STATEMENT_GET_RESULT
 
-immutable MYSQL_STATUS
+immutable structMYSQL_STATUS
     status::UInt8
 end
 
@@ -164,7 +164,7 @@ const MYSQL_STATUS_STATEMENT_GET_RESULT = MYSQL_STATUS(3)
 export MYSQL_SET_OPTION
 export MYSQL_OPTION_MULTI_STATEMENT_ON, MYSQL_OPTION_MULTI_STATEMENT_OFF
 
-immutable MYSQL_SET_OPTION
+immutable structMYSQL_SET_OPTION
     status::UInt8
 end
 
@@ -185,7 +185,7 @@ const MYSQL_SHUTDOWN_KILLABLE_UPDATE      = 0x08
 
 export MYSQL_SHUTDOWN_LEVEL
 
-immutable MYSQL_SHUTDOWN_LEVEL
+immutable struct MYSQL_SHUTDOWN_LEVEL
     level::UInt8
 end
 
@@ -294,7 +294,7 @@ macro str_2_c_str(str)
     return :($str == "" ? Base.convert(Ptr{UInt8}, C_NULL) : pointer($str))
 end
 
-type _MYSQL_FIELD_
+struct _MYSQL_FIELD_
     name::Ptr{UInt8}
     org_name::Ptr{UInt8}
     table::Ptr{UInt8}
@@ -324,7 +324,7 @@ _MYSQL_FIELD_() = _MYSQL_FIELD_(C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, 
 
 export MYSQL_FIELD
 
-type MYSQL_FIELD
+struct MYSQL_FIELD
     name::UTF8String
     org_name::UTF8String
     table::UTF8String
