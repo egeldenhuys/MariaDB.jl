@@ -20,7 +20,7 @@ struct MYSQL_ROW
     data::Vector{String}
 end
 
-struct structMYSQL_FIELD_OFFSET
+struct MYSQL_FIELD_OFFSET
     off::UInt32
 end
 
@@ -29,7 +29,7 @@ mutable struct MYSQL_ROW_OFFSET
     MYSQL_ROW_OFFSET(p) = (val = new(p) ; finalizer(val, finalizer!) ; val)
 end
 
-struct structMYSQL_FIELD_TYPE
+struct MYSQL_FIELD_TYPE
     typ::UInt8
 end
 
@@ -79,7 +79,7 @@ export MYSQL_TIMESTAMP_TYPE
 export MYSQL_TIMESTAMP_NONE, MYSQL_TIMESTAMP_ERROR, MYSQL_TIMESTAMP_DATE,
        MYSQL_TIMESTAMP_DATETIME, MYSQL_TIMESTAMP_TIME
 
-immutable structMYSQL_TIMESTAMP_TYPE
+struct MYSQL_TIMESTAMP_TYPE
     typ::Int8
 end
 
@@ -101,7 +101,7 @@ export MYSQL_OPT_CONNECT_TIMEOUT, MYSQL_OPT_COMPRESS, MYSQL_OPT_NAMED_PIPE, MYSQ
        MYSQL_PLUGIN_DIR, MYSQL_DEFAULT_AUTH, MYSQL_ENABLE_CLEARTEXT_PLUGIN, MYSQL_PROGRESS_CALLBACK,
        MYSQL_OPT_NONBLOCK
 
-immutable structMYSQL_OPTION
+struct MYSQL_OPTION
     opt::UInt16
 end
 
@@ -137,7 +137,7 @@ export MYSQL_PROTOCOL_TYPE
 export MYSQL_PROTOCOL_DEFAULT, MYSQL_PROTOCOL_TCP, MYSQL_PROTOCOL_SOCKET, MYSQL_PROTOCOL_PIPE,
        MYSQL_PROTOCOL_PIPE
 
-immutable structMYSQL_PROTOCOL_TYPE
+struct MYSQL_PROTOCOL_TYPE
     typ::UInt8
 end
 
@@ -152,7 +152,7 @@ export MYSQL_STATUS
 export MYSQL_STATUS_READY, MYSQL_STATUS_GET_RESULT, MYSQL_STATUS_USE_RESULT,
        MYSQL_STATUS_STATEMENT_GET_RESULT
 
-immutable structMYSQL_STATUS
+struct MYSQL_STATUS
     status::UInt8
 end
 
@@ -164,7 +164,7 @@ const MYSQL_STATUS_STATEMENT_GET_RESULT = MYSQL_STATUS(3)
 export MYSQL_SET_OPTION
 export MYSQL_OPTION_MULTI_STATEMENT_ON, MYSQL_OPTION_MULTI_STATEMENT_OFF
 
-immutable structMYSQL_SET_OPTION
+struct MYSQL_SET_OPTION
     status::UInt8
 end
 
@@ -185,7 +185,7 @@ const MYSQL_SHUTDOWN_KILLABLE_UPDATE      = 0x08
 
 export MYSQL_SHUTDOWN_LEVEL
 
-immutable struct MYSQL_SHUTDOWN_LEVEL
+struct MYSQL_SHUTDOWN_LEVEL
     level::UInt8
 end
 
@@ -302,10 +302,14 @@ struct _MYSQL_FIELD_
     db::Ptr{UInt8}
     catalog::Ptr{UInt8}
     def::Ptr{UInt8}
-    @windows_only length::UInt32
-    @windows_only max_length::UInt32
-    @unix_only length::UInt
-    @unix_only max_length::UInt
+    @static if Sys.iswindows()
+        length::UInt32
+        max_length::UInt32
+    end
+    @static if Sys.islinux()
+        length::UInt
+        max_length::UInt
+    end
     name_length::UInt32
     org_name_length::UInt32
     table_length::UInt32
@@ -317,7 +321,7 @@ struct _MYSQL_FIELD_
     decimals::UInt32
     charsetnr::UInt32
     field_type::UInt32
-    extension::Ptr{Void}
+    extension::Ptr{Cvoid}
 end
 _MYSQL_FIELD_() = _MYSQL_FIELD_(C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL,
                                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, C_NULL)
@@ -325,13 +329,13 @@ _MYSQL_FIELD_() = _MYSQL_FIELD_(C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, C_NULL, 
 export MYSQL_FIELD
 
 struct MYSQL_FIELD
-    name::UTF8String
-    org_name::UTF8String
-    table::UTF8String
-    org_table::UTF8String
-    db::UTF8String
-    catalog::UTF8String
-    def::UTF8String
+    name::String
+    org_name::String
+    table::String
+    org_table::String
+    db::String
+    catalog::String
+    def::String
     length::UInt
     max_length::UInt
     flags::UInt
@@ -359,7 +363,7 @@ function MYSQL_FIELD(c_mysql_field::_MYSQL_FIELD_)
     )
 end
 
-type _MY_CHARSET_INFO_
+struct _MY_CHARSET_INFO_
     number::UInt32
     state::UInt32
     csname::Ptr{UInt8}
@@ -373,13 +377,13 @@ _MY_CHARSET_INFO_() = _MY_CHARSET_INFO_(0, 0, C_NULL, C_NULL, C_NULL, C_NULL, 0,
 
 export MY_CHARSET_INFO
 
-type MY_CHARSET_INFO
+struct MY_CHARSET_INFO
     number::UInt
     state::UInt
-    csname::UTF8String
-    name::UTF8String
-    comment::UTF8String
-    dir::UTF8String
+    csname::String
+    name::String
+    comment::String
+    dir::String
     mbminlen::UInt
     mbmaxlen::UInt
 end
@@ -400,15 +404,19 @@ end
 
 export MYSQL_TIME
 
-type MYSQL_TIME
+struct MYSQL_TIME
     year::UInt32
     month::UInt32
     day::UInt32
     hour::UInt32
     minute::UInt32
     second::UInt32
-    @windows_only second_part::UInt32
-    @unix_only second_part::UInt
+    @static if Sys.iswindows()
+        second_part::UInt32
+    end
+    @static if Sys.islinux()
+        second_part::UInt
+    end
     neg::Int8
     time_type::MYSQL_TIMESTAMP_TYPE
 end

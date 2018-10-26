@@ -1,13 +1,13 @@
 module TestFuncs
-    using Base.Test
+    using Test
     using MariaDB
 
-    function connect_to_database(user::String, password::String, db::String)
+    function connect_to_database(user::String, password::String, db::String)::MYSQL
         mysql = mysql_init()
         @test mysql != C_NULL
 
         connect_flags = MariaDB.CLIENT_MULTI_RESULTS | MariaDB.CLIENT_MULTI_STATEMENTS
-        mysql = mysql_real_connect(mysql, "localhost", user, passwd=password, db=db, flags=connect_flags)
+        mysql = mysql_real_connect(mysql, "127.0.0.1", user, password, db, UInt(3306))
         @test mysql != C_NULL
 
         return mysql
@@ -17,12 +17,12 @@ module TestFuncs
         mysql = connect_to_database("root", "", "")
 
         command = "create database db_test;"
-        command = string(command, "alter database db_test DEFAULT CHARACTER SET = utf8mb4;")
-        command = string(command, "alter database db_test DEFAULT COLLATE = utf8mb4_unicode_ci;")
-        command = string(command, "create user 'maarten'@'localhost' identified by 'pwd_maarten';")
-        command = string(command, "grant ALL on db_test.* to 'maarten'@'localhost';")
-        command = string(command, "create user 'michael'@'localhost' identified by 'pwd_michael';")
-        command = string(command, "grant SELECT on db_test.* to 'michael'@'localhost';")
+        #command = string(command, "alter database db_test CHARACTER SET = 'utf8';")
+        #command = string(command, "alter database db_test DEFAULT COLLATE = utf8mb4_unicode_ci;")
+        command = string(command, "create user 'maarten'@'%' identified by 'pwd_maarten';")
+        command = string(command, "grant ALL on db_test.* to 'maarten'@'%';")
+        command = string(command, "create user 'michael'@'%' identified by 'pwd_michael';")
+        command = string(command, "grant SELECT on db_test.* to 'michael'@'%';")
         rc = mysql_real_query(mysql, command)
         if rc != MYSQL_OK
             println(mysql_error(mysql))
@@ -35,8 +35,8 @@ module TestFuncs
     function drop_test_database()
         mysql = connect_to_database("root", "", "")
 
-        command = "drop user 'maarten'@'localhost';"
-        command = string(command, "drop user 'michael'@'localhost';")
+        command = "drop user 'maarten'@'%';"
+        command = string(command, "drop user 'michael'@'%';")
         command = string(command, "drop database db_test;")
         rc = mysql_real_query(mysql, command)
         if rc != MYSQL_OK
@@ -51,28 +51,34 @@ module TestFuncs
         mysql = connect_to_database("root", "", "")
 
         # Check to see if we already have a database 'db_test'
-        command = "show databases like 'db_test';"
+        command = "SHOW DATABASES LIKE 'db_test';"
         rc = mysql_real_query(mysql, command)
         if rc != MYSQL_OK
             println(mysql_error(mysql))
         end
         @test rc == MYSQL_OK
-
+        println("CHECK_B")
         fc = mysql_field_count(mysql)
         @test fc == 1
 
+        println("CHECK_C")
         reshndl = mysql_use_result(mysql)
         @test reshndl != C_NULL
 
+        println("CHECK_D")
         rowCount = 0
         while mysql_fetch_row(reshndl) != C_NULL
+            println("CHECK_E")
             rowCount+=1
         end
 
+        println("CHECK_F")
         mysql_free_result(reshndl)
 
+        println("CHECK_G")
         mysql_close(mysql)
 
+        println("CHECK_A")
         if rowCount > 0
             println("Database 'db_test' found")
             println("\tRecreating...")
@@ -237,7 +243,7 @@ Field: {
         end
     end
 
-    function print_row(row::Vector{ByteString})
+    function print_row(row::Vector{String})
         print("| ")
         for c in row
             print("$c | ")
