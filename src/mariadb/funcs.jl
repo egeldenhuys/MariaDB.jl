@@ -206,9 +206,9 @@ an array. Each field contains the definition for a column of the result set.
 
 - **result** a result set identifier returned by *mysql_store_result()* or *mysql_use_result()*.
 """
-function mysql_fetch_fields(result::MYSQL_RES)
+function mysql_fetch_fields(result::MYSQL_RES)::Vector{MYSQL_FIELD}
     num_fields = ccall( (:mysql_num_fields, mariadb_lib), Cuint, (Ptr{Cvoid},), result.ptr)
-    fields = Vector{MYSQL_FIELD}(num_fields)
+    fields = Vector{MYSQL_FIELD}(undef, num_fields)
     ptr = ccall( (:mysql_fetch_fields, mariadb_lib), Ptr{_MYSQL_FIELD_}, (Ptr{Cvoid},), result.ptr)
     for i in 1:num_fields
         fields[i] = MYSQL_FIELD(unsafe_load(ptr,i))
@@ -296,6 +296,14 @@ const NULL_TERMINATED = [ MYSQL_TYPE_TINY,
     MYSQL_TYPE_NOWDATE,
     MYSQL_TYPE_VARCHAR,
     MYSQL_TYPE_NULL ]
+
+
+"""
+MYSQL_ROW mysql_fetch_row(MYSQL_RES * result);
+"""
+function mysql_fetch_row_ptr(mysql_res::MYSQL_RES)::Ptr{Ptr{UInt8}}
+    ccall((:mysql_fetch_row, "libmariadb"), Ptr{Ptr{UInt8}}, (Ref{Cvoid},), mysql_res.ptr)
+end
 
 function mysql_fetch_row(result::MYSQL_RES)
     row = Vector{MDB_COLUMN}()
@@ -936,20 +944,17 @@ mysql_real_connect(mysql::MYSQL, host::Cstring, user::Cstring,
 	   (Ptr{Cvoid}, Cstring, Cstring, Cstring, Cstring, Cuint, Cstring, Culong),
            mysql.ptr, host, user, passwd, db, port, unix_socket, flags)
 
-function mysql_real_connect(mysql::MYSQL, host::String, user::String,
+mysql_real_connect(mysql::MYSQL, host::String, user::String,
                     passwd::String = "",
                     db::String = "",
                     port::UInt=UInt(0),
                     unix_socket::String="",
-                    flags::UInt32=UInt32(0))
-
-    mysql_real_connect(mysql, Base.unsafe_convert(Cstring, host), Base.unsafe_convert(Cstring, user),
+                    flags::UInt32=UInt32(0)) = mysql_real_connect(mysql, Base.unsafe_convert(Cstring, host), Base.unsafe_convert(Cstring, user),
     Base.unsafe_convert(Cstring, passwd),
     Base.unsafe_convert(Cstring, db),
         port,
         Base.unsafe_convert(Cstring, unix_socket),
         flags)
-end
 
 """
 # Description
@@ -1316,7 +1321,7 @@ The memory allocated by **mysql_store_result()** needs to be released by calling
   *mysql_real_connect()*.
 """
 mysql_store_result(mysql::MYSQL) =
-    ccall( (:mysql_store_result, mariadb_lib), Ptr{Cvoid}, (Ptr{Cvoid},), mysql.ptr)
+    ccall( (:mysql_store_result, mariadb_lib), MYSQL_RES, (Ptr{Cvoid},), mysql.ptr)
 
 """
 # Description

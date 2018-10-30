@@ -29,10 +29,10 @@ mutable struct MYSQL_ROW_OFFSET
     MYSQL_ROW_OFFSET(p) = (val = new(p) ; finalizer(val, finalizer!) ; val)
 end
 
-struct MYSQL_FIELD_TYPE
-    typ::UInt8
-end
 
+struct MYSQL_FIELD_TYPE
+    typ::UInt32
+end
 
 export MYSQL_FIELD_TYPE
 export MYSQL_TYPE_DECIMAL, MYSQL_TYPE_TINY, MYSQL_TYPE_SHORT, MYSQL_TYPE_LONG, MYSQL_TYPE_FLOAT,
@@ -287,7 +287,7 @@ const REFRESH_FAST                   = 0x80000000
 
 
 macro c_str_2_str(c_str)
-    return :($c_str == C_NULL ? "" : bytestring($c_str))
+    return :($c_str == C_NULL ? "" : Base.unsafe_string($c_str))
 end
 
 macro str_2_c_str(str)
@@ -344,22 +344,32 @@ struct MYSQL_FIELD
     field_type::MYSQL_FIELD_TYPE
 end
 
+function c_str_to_str(c_str)
+    if c_str == C_NULL
+        ""
+    else
+        Base.unsafe_string(c_str)
+    end
+end
+
+# NOTE: macros give:
+# ERROR: LoadError: UndefVarError: c_mysql_field not defined
 MYSQL_FIELD() = MYSQL_FIELD("", "", "", "", "", 0, 0, 0, 0, 0, 0)
 function MYSQL_FIELD(c_mysql_field::_MYSQL_FIELD_)
     MYSQL_FIELD(
-        @c_str_2_str(c_mysql_field.name),
-        @c_str_2_str(c_mysql_field.org_name),
-        @c_str_2_str(c_mysql_field.table),
-        @c_str_2_str(c_mysql_field.org_table),
-        @c_str_2_str(c_mysql_field.db),
-        @c_str_2_str(c_mysql_field.catalog),
-        @c_str_2_str(c_mysql_field.def),
+        c_str_to_str(c_mysql_field.name),
+        c_str_to_str(c_mysql_field.org_name),
+        c_str_to_str(c_mysql_field.table),
+        c_str_to_str(c_mysql_field.org_table),
+        c_str_to_str(c_mysql_field.db),
+        c_str_to_str(c_mysql_field.catalog),
+        c_str_to_str(c_mysql_field.def),
         c_mysql_field.length,
         c_mysql_field.max_length,
         c_mysql_field.flags,
         c_mysql_field.decimals,
         c_mysql_field.charsetnr,
-        c_mysql_field.field_type
+        MYSQL_FIELD_TYPE(c_mysql_field.field_type)
     )
 end
 
